@@ -18,8 +18,8 @@ struct HomeMartAuthLogo: View {
                 .scaledToFit()
                 .scaleEffect(marginTrimScale)
         }
-        .frame(maxHeight: 48)
-        .frame(maxWidth: 240)
+        .frame(maxHeight: 44)
+        .frame(maxWidth: 220)
         .clipped()
     }
 }

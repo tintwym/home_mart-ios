@@ -4,7 +4,6 @@
 //
 
 import SwiftUI
-import UIKit
 
 struct SignUpView: View {
     @Binding var isShowingSignUp: Bool
@@ -16,81 +15,66 @@ struct SignUpView: View {
     @State private var signUpError: String?
 
     var body: some View {
-        VStack(spacing: 16) {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 12) {
                 HomeMartAuthLogo()
-                    .padding(.top, 6)
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 4)
 
-                Text("Create an account").font(.title2).bold()
+                Text("Create an account")
+                    .font(.title2.weight(.bold))
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 Text("Enter your details below to create your account")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Full name").font(.subheadline).foregroundStyle(.primary)
-                    TextField(
-                        "",
-                        text: $name,
-                        prompt: Text("Your name").foregroundStyle(Color(uiColor: .placeholderText))
-                    )
-                    .textContentType(.name)
-                    .textInputAutocapitalization(.words)
-                    .autocorrectionDisabled()
-                    .accessibilityLabel("Full name")
-                    .padding(12)
-                    .background(RoundedRectangle(cornerRadius: 10).strokeBorder(.quaternary))
-                }
-                .padding(.horizontal)
-
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Email").font(.subheadline).foregroundStyle(.primary)
-                    TextField("email@example.com", text: $email)
-                        .textContentType(.emailAddress)
-                        .keyboardType(.emailAddress)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .accessibilityLabel("Email")
-                        .padding(12)
-                        .background(RoundedRectangle(cornerRadius: 10).strokeBorder(.quaternary))
-                }
-                .padding(.horizontal)
-
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text("Password").font(.subheadline)
-                        Spacer()
+                VStack(alignment: .leading, spacing: 12) {
+                    labeledField(title: "Full name") {
+                        TextField("Your name", text: $name, axis: .horizontal)
+                            .textContentType(.name)
+                            .textInputAutocapitalization(.words)
+                            .autocorrectionDisabled()
+                            .foregroundStyle(.primary)
+                            .accessibilityLabel("Full name")
+                            .authInputChrome()
                     }
-                    SecureField(
-                        "Password",
-                        text: $password,
-                        prompt: Text("Password").foregroundStyle(Color(uiColor: .placeholderText))
-                    )
-                    .textContentType(.password)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .tint(.primary)
-                    .padding(12)
-                    .background(RoundedRectangle(cornerRadius: 10).strokeBorder(.quaternary))
-                }
-                .padding(.horizontal)
 
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text("Confirm password").font(.subheadline)
-                        Spacer()
+                    labeledField(title: "Email") {
+                        TextField("email@example.com", text: $email, axis: .horizontal)
+                            .textContentType(.emailAddress)
+                            .keyboardType(.emailAddress)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                            .foregroundStyle(.primary)
+                            .tint(.primary)
+                            .accessibilityLabel("Email")
+                            .authInputChrome()
                     }
-                    ConfirmPasswordField(text: $confirmPassword, placeholder: "Confirm password")
-                        .frame(maxWidth: .infinity, minHeight: 34, alignment: .leading)
-                        .padding(12)
-                        .background(RoundedRectangle(cornerRadius: 10).strokeBorder(.quaternary))
+
+                    labeledField(title: "Password") {
+                        SecureField("Password", text: $password)
+                            .textContentType(.password)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                            .foregroundStyle(.primary)
+                            .tint(.primary)
+                            .authInputChrome()
+                    }
+
+                    labeledField(title: "Confirm password") {
+                        ConfirmPasswordField(text: $confirmPassword, placeholder: "Confirm password")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .authInputChrome()
+                    }
                 }
-                .padding(.horizontal)
+                .padding(.top, 4)
 
                 if let err = signUpError, !err.isEmpty {
                     Text(err)
                         .font(.footnote)
                         .foregroundStyle(.red)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
+                        .frame(maxWidth: .infinity)
                 }
 
                 Button {
@@ -116,17 +100,30 @@ struct SignUpView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
-                .padding(.horizontal)
                 .disabled(isSubmitting)
+                .padding(.top, 4)
 
                 HStack(spacing: 4) {
                     Text("Already have an account?").foregroundStyle(.secondary)
                     Button("Log in") { isShowingSignUp = false }
                 }
                 .font(.subheadline)
-                .padding(.bottom, 8)
+                .frame(maxWidth: .infinity)
+                .padding(.top, 4)
+                .padding(.bottom, 16)
+            }
+            .padding(.horizontal, 20)
         }
+        .scrollDismissesKeyboard(.interactively)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .padding(.bottom, 8)
+    }
+
+    private func labeledField<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.secondary)
+            content()
+        }
     }
 }

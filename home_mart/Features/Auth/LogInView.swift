@@ -4,7 +4,6 @@
 //
 
 import SwiftUI
-import UIKit
 
 struct LogInView: View {
     @Binding var isShowingSignUp: Bool
@@ -15,56 +14,61 @@ struct LogInView: View {
     @State private var loginError: String?
 
     var body: some View {
-        VStack(spacing: 16) {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 12) {
                 HomeMartAuthLogo()
-                    .padding(.top, 6)
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 4)
 
-                Text("Log in to your account").font(.title2).bold()
+                Text("Log in to your account")
+                    .font(.title2.weight(.bold))
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 Text("Enter your email and password below to log in")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
-                Group {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Email").font(.subheadline).foregroundStyle(.primary)
-                        TextField("email@example.com", text: $email)
+                VStack(alignment: .leading, spacing: 12) {
+                    labeledField(title: "Email") {
+                        TextField("email@example.com", text: $email, axis: .horizontal)
                             .textContentType(.emailAddress)
                             .keyboardType(.emailAddress)
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled()
+                            .foregroundStyle(.primary)
+                            .tint(.primary)
                             .accessibilityLabel("Email")
-                            .padding(12)
-                            .background(RoundedRectangle(cornerRadius: 10).strokeBorder(.quaternary))
+                            .authInputChrome()
                     }
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("Password").font(.subheadline)
-                            Spacer()
-                            Button("Forgot password?") { /* action */ }
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(alignment: .firstTextBaseline) {
+                            Text("Password")
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(.secondary)
+                            Spacer(minLength: 8)
+                            Button("Forgot password?") { /* TODO: reset flow */ }
                                 .font(.subheadline)
                         }
-                        SecureField(
-                            "Password",
-                            text: $password,
-                            prompt: Text("Password").foregroundStyle(Color(uiColor: .placeholderText))
-                        )
-                        .textContentType(.password)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .tint(.primary)
-                        .padding(12)
-                        .background(RoundedRectangle(cornerRadius: 10).strokeBorder(.quaternary))
+                        SecureField("Password", text: $password)
+                            .textContentType(.password)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                            .foregroundStyle(.primary)
+                            .tint(.primary)
+                            .authInputChrome()
                     }
-                    Toggle("Remember me", isOn: $rememberMe)
                 }
-                .padding(.horizontal)
+                .padding(.top, 4)
+
+                Toggle("Remember me", isOn: $rememberMe)
+                    .padding(.top, 2)
 
                 if let err = loginError, !err.isEmpty {
                     Text(err)
                         .font(.footnote)
                         .foregroundStyle(.red)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
+                        .frame(maxWidth: .infinity)
                 }
 
                 Button {
@@ -85,17 +89,30 @@ struct LogInView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
-                .padding(.horizontal)
                 .disabled(isSubmitting)
+                .padding(.top, 4)
 
                 HStack(spacing: 4) {
                     Text("Don't have an account?").foregroundStyle(.secondary)
                     Button("Sign up") { isShowingSignUp = true }
                 }
                 .font(.subheadline)
-                .padding(.bottom, 8)
+                .frame(maxWidth: .infinity)
+                .padding(.top, 4)
+                .padding(.bottom, 16)
+            }
+            .padding(.horizontal, 20)
         }
+        .scrollDismissesKeyboard(.interactively)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .padding(.bottom, 8)
+    }
+
+    private func labeledField<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.secondary)
+            content()
+        }
     }
 }

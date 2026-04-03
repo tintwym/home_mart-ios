@@ -16,6 +16,8 @@ final class AuthStore {
 
     private(set) var authToken: String?
     private(set) var lastError: String?
+    /// Cached `GET /mapi/user` payload for UI (e.g. Me tab greeting). Cleared on logout.
+    private(set) var currentUser: LoginUserPayload?
 
     private init() {
         if let keychain = AuthTokenStorage.read() {
@@ -25,13 +27,28 @@ final class AuthStore {
             AuthTokenStorage.write(legacy)
             UserDefaults.standard.removeObject(forKey: legacyAuthTokenUserDefaultsKey)
         }
+        if authToken != nil {
+            Task { @MainActor in
+                await AuthStore.shared.refreshCurrentUser()
+            }
+        }
     }
 
     func logout() {
         authToken = nil
+        currentUser = nil
         AuthTokenStorage.delete()
         UserDefaults.standard.removeObject(forKey: legacyAuthTokenUserDefaultsKey)
         lastError = nil
+    }
+
+    /// Refreshes `currentUser` from the API. No-op when logged out.
+    func refreshCurrentUser() async {
+        guard authToken != nil else {
+            currentUser = nil
+            return
+        }
+        currentUser = await fetchCurrentUser()
     }
 
     private func persistToken(_ token: String) {
@@ -75,6 +92,7 @@ final class AuthStore {
                 if (200 ... 299).contains(http.statusCode) {
                     if let token = Self.decodeAuthToken(from: data), !token.isEmpty {
                         persistToken(token)
+                        await refreshCurrentUser()
                         return true
                     }
                     lastError = "Server did not return a token."
@@ -154,6 +172,7 @@ final class AuthStore {
             }
             if let token = Self.decodeAuthToken(from: data), !token.isEmpty {
                 persistToken(token)
+                await refreshCurrentUser()
                 return true
             }
             lastError = "Account created but no token was returned. Try logging in."

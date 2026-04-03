@@ -249,11 +249,19 @@ struct ProfileTabView: View {
             .navigationTitle(auth.authToken != nil ? "Me" : "")
             .navigationBarTitleDisplayMode(.inline)
         }
+        .task(id: auth.authToken) {
+            await auth.refreshCurrentUser()
+        }
     }
 
     /// Keep token check in one place so login/sign-up children are not rebuilt around unrelated `AuthStore` updates.
     private var needsAuthGate: Bool {
         auth.authToken == nil
+    }
+
+    /// Shown under the avatar: **name** from `/mapi/user` only (hidden until loaded or if absent).
+    private var meDisplayName: String {
+        auth.currentUser?.name?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
     }
 
     @MainActor
@@ -294,8 +302,11 @@ struct ProfileTabView: View {
                     .buttonStyle(.plain)
                     .accessibilityLabel("Edit profile photo and personal details")
 
-                    Text("You're signed in")
-                        .font(.title2.weight(.semibold))
+                    if !meDisplayName.isEmpty {
+                        Text(meDisplayName)
+                            .font(.title2.weight(.semibold))
+                            .multilineTextAlignment(.center)
+                    }
                 }
                 .padding(.top, 24)
                 .padding(.bottom, 20)
