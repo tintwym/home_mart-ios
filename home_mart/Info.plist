@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>HOME_MART_BASE_URL</key>
+	<string>$(HOME_MART_BASE_URL)</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Home Mart uses Face ID to confirm your identity for two-factor authentication on this device.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
+</dict>
+</plist>

@@ -1,0 +1,5 @@
+// Home Mart API host (no trailing slash). Baked into Info.plist at build time.
+// Runtime override: scheme env HOME_MART_BASE_URL (see APIConfiguration).
+// Avoid // in assignment — xcconfig treats // as start of comment.
+URL_SLASH = /
+HOME_MART_BASE_URL = https:$(URL_SLASH)$(URL_SLASH)homemart-mm.vercel.app
