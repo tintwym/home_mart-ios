@@ -20,8 +20,12 @@ struct ConfirmPasswordField: UIViewRepresentable {
         let tf = UITextField()
         tf.isSecureTextEntry = true
         tf.autocorrectionType = .no
+        tf.spellCheckingType = .no
         tf.autocapitalizationType = .none
         tf.keyboardType = .asciiCapable
+        tf.smartDashesType = .no
+        tf.smartQuotesType = .no
+        tf.smartInsertDeleteType = .no
         tf.font = UIFont.preferredFont(forTextStyle: .body)
         tf.borderStyle = .none
         tf.backgroundColor = .clear
@@ -31,6 +35,11 @@ struct ConfirmPasswordField: UIViewRepresentable {
         tf.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         tf.setContentHuggingPriority(.required, for: .vertical)
         tf.setContentCompressionResistancePriority(.required, for: .vertical)
+        tf.inputAssistantItem.leadingBarButtonGroups = []
+        tf.inputAssistantItem.trailingBarButtonGroups = []
+        if #available(iOS 17.0, *) {
+            tf.inlinePredictionType = .no
+        }
         applyPlaceholder(tf, placeholder)
         tf.text = text
         tf.addTarget(context.coordinator, action: #selector(Coordinator.editingChanged), for: .editingChanged)

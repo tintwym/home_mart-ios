@@ -64,9 +64,18 @@ enum APIConfiguration {
         apiRoot.appending(path: "mapi/user")
     }
 
-    /// Password change — try **`PUT`** first (Laravel Fortify / Breeze), then **`POST`** / **`PATCH`** if the server returns **405**.
+    /// Password change candidates — tried in order until one responds with something other than **404** / **405** (see `AuthStore.updatePassword`).
+    static var passwordUpdateCandidateURLs: [URL] {
+        [
+            apiRoot.appending(path: "mapi/user/password"),
+            apiRoot.appending(path: "api/user/password"),
+            apiRoot.appending(path: "mapi/password"),
+        ]
+    }
+
+    /// First password-update URL (convenience for docs / tests).
     static var userPasswordURL: URL {
-        apiRoot.appending(path: "mapi/user/password")
+        passwordUpdateCandidateURLs[0]
     }
 
     // MARK: - Categories (production: `GET /mapi/categories` — JSON, no CSRF)

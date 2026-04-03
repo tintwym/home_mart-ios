@@ -183,7 +183,8 @@ final class AuthStore {
         }
     }
 
-    /// Updates password via `PUT` / `POST` / `PATCH` `mapi/user/password` with Bearer token (Laravel-style JSON body).
+    /// Updates password via Laravel-style JSON (`current_password`, `password`, `password_confirmation`) and Bearer token.
+    /// Tries each URL in `APIConfiguration.passwordUpdateCandidateURLs` and, per URL, `PUT` then `POST` then `PATCH` until one succeeds.
     func updatePassword(currentPassword: String, newPassword: String, passwordConfirmation: String) async -> Bool {
         lastError = nil
         guard !currentPassword.isEmpty else {
@@ -225,53 +226,56 @@ final class AuthStore {
         configuration.timeoutIntervalForRequest = 25
         let session = URLSession(configuration: configuration)
 
-        let url = APIConfiguration.userPasswordURL
+        let urls = APIConfiguration.passwordUpdateCandidateURLs
         let methods = ["PUT", "POST", "PATCH"]
-        var lastStatus: Int?
-        var lastData: Data?
+        var last404Message: String?
 
-        for method in methods {
-            var request = URLRequest(url: url)
-            request.httpMethod = method
-            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            request.setValue("application/json", forHTTPHeaderField: "Accept")
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-            request.httpBody = body
+        urlLoop: for url in urls {
+            for method in methods {
+                var request = URLRequest(url: url)
+                request.httpMethod = method
+                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                request.setValue("application/json", forHTTPHeaderField: "Accept")
+                request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+                request.httpBody = body
 
-            do {
-                let (data, response) = try await session.data(for: request)
-                guard let http = response as? HTTPURLResponse else {
-                    lastError = "Invalid response."
+                do {
+                    let (data, response) = try await session.data(for: request)
+                    guard let http = response as? HTTPURLResponse else {
+                        lastError = "Invalid response."
+                        return false
+                    }
+
+                    if (200 ... 299).contains(http.statusCode) {
+                        lastError = nil
+                        return true
+                    }
+                    if http.statusCode == 405 {
+                        continue
+                    }
+                    if http.statusCode == 404 {
+                        last404Message = Self.apiErrorMessage(
+                            data: data,
+                            statusCode: 404,
+                            fallback: "Not found."
+                        )
+                        continue urlLoop
+                    }
+                    lastError = Self.apiErrorMessage(
+                        data: data,
+                        statusCode: http.statusCode,
+                        fallback: "Could not update password (\(http.statusCode))."
+                    )
+                    return false
+                } catch {
+                    lastError = Self.humanizedRequestError(error)
                     return false
                 }
-                lastStatus = http.statusCode
-                lastData = data
-
-                if (200 ... 299).contains(http.statusCode) {
-                    lastError = nil
-                    return true
-                }
-                if http.statusCode == 405 {
-                    continue
-                }
-                lastError = Self.apiErrorMessage(
-                    data: data,
-                    statusCode: http.statusCode,
-                    fallback: "Could not update password (\(http.statusCode))."
-                )
-                return false
-            } catch {
-                lastError = Self.humanizedRequestError(error)
-                return false
             }
         }
 
-        if let code = lastStatus, let data = lastData {
-            lastError = Self.apiErrorMessage(
-                data: data,
-                statusCode: code,
-                fallback: "Password update is not available on the server (\(code))."
-            )
+        if let msg = last404Message {
+            lastError = msg + " The server may not expose password update yet — add a Sanctum/API route (e.g. PUT mapi/user/password) that accepts JSON and Bearer auth."
         } else {
             lastError = lastError ?? "Could not update password."
         }

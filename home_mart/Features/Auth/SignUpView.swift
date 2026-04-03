@@ -54,11 +54,12 @@ struct SignUpView: View {
 
                     labeledField(title: "Password") {
                         SecureField("Password", text: $password)
-                            .textContentType(.password)
+                            .textContentType(.newPassword)
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled()
                             .foregroundStyle(.primary)
                             .tint(.primary)
+                            .keyboardType(.asciiCapable)
                             .authInputChrome()
                     }
 
@@ -114,7 +115,8 @@ struct SignUpView: View {
             }
             .padding(.horizontal, 20)
         }
-        .scrollDismissesKeyboard(.interactively)
+        // `.interactively` triggers extra keyboard layout passes; Simulator logs spurious TUIKeyboard / constraint noise.
+        .scrollDismissesKeyboard(.never)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 

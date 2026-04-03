@@ -57,8 +57,9 @@ struct home_martTests {
     }
 
     @Test
-    func userPasswordURLUsesMapiPath() {
-        let url = APIConfiguration.userPasswordURL
-        #expect(url.path.contains("mapi/user/password"))
+    func passwordUpdateCandidatesPreferMapiUserPassword() {
+        let urls = APIConfiguration.passwordUpdateCandidateURLs
+        #expect(!urls.isEmpty)
+        #expect(urls[0].path.contains("mapi/user/password"))
     }
 }

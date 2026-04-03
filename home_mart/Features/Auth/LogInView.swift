@@ -56,6 +56,7 @@ struct LogInView: View {
                             .autocorrectionDisabled()
                             .foregroundStyle(.primary)
                             .tint(.primary)
+                            .keyboardType(.asciiCapable)
                             .authInputChrome()
                     }
                 }
@@ -103,7 +104,7 @@ struct LogInView: View {
             }
             .padding(.horizontal, 20)
         }
-        .scrollDismissesKeyboard(.interactively)
+        .scrollDismissesKeyboard(.never)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
