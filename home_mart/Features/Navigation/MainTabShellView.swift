@@ -24,106 +24,151 @@ struct MainTabShellView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
+        ZStack(alignment: .bottom) {
             Group {
                 switch selectedTab {
                 case .home:
-                    DashboardHomeView()
+                    DashboardHomeView(onSelectTab: { selectedTab = $0 })
                 case .wishlist:
                     WishlistTabView()
                 case .sell:
                     SellTabView(selectedTab: $selectedTab)
                 case .notifications:
-                    NotificationsTabView()
+                    NavigationStack {
+                        MessagesListView()
+                    }
                 case .profile:
                     ProfileTabView(selectedTab: $selectedTab)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            // Reserve space so content never hides behind the floating bar.
+            .safeAreaInset(edge: .bottom) {
+                if showsBottomTabBar { Color.clear.frame(height: 90) }
+            }
 
             if showsBottomTabBar {
                 MainTabBar(selection: $selectedTab)
+                    .padding(.horizontal, 18)
+                    .padding(.bottom, 24)
             }
         }
+        .ignoresSafeArea(edges: .bottom)
         .background(Color(.systemBackground))
     }
 }
 
-// MARK: - Custom tab bar (reference: gray bar, blue selection, red Sell)
+// MARK: - Floating pill tab bar (iOS 26 liquid-glass style)
 
 private struct MainTabBar: View {
     @Binding var selection: AppMainTab
-
-    private let barBackground = Color(red: 0.96, green: 0.96, blue: 0.97)
-    /// Same height for every tab’s icon row so captions line up (Sell’s red tile is 40×40; SF Symbols sit centered in the same slot).
-    private let tabIconSlotHeight: CGFloat = 40
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        VStack(spacing: 0) {
-            Divider()
-                .opacity(0.45)
-
-            HStack(spacing: 0) {
-                tabButton(.home, title: "Explore", systemImage: "magnifyingglass")
-                tabButton(.wishlist, title: "Wishlist", systemImage: "heart")
-                sellButton
-                tabButton(.notifications, title: "Updates", systemImage: "bell")
-                tabButton(.profile, title: "Me", systemImage: "person")
-            }
-            .padding(.top, 8)
-            .padding(.bottom, 6)
-            .padding(.bottom, 4)
-            .background(
-                barBackground
-                    .ignoresSafeArea(edges: .bottom)
-            )
+        HStack(spacing: 0) {
+            tabButton(.home,          title: "Explore",  systemImage: "magnifyingglass")
+            tabButton(.wishlist,      title: "Wishlist", systemImage: "heart")
+            sellButton
+            tabButton(.notifications, title: "Messages", systemImage: "bubble.left")
+            tabButton(.profile,       title: "Me",       systemImage: "person")
         }
+        .padding(.vertical, 10)
+        .padding(.horizontal, 6)
+        .background(pillBackground)
     }
+
+    // MARK: Glass pill shell
+
+    private var pillBackground: some View {
+        let shape = Capsule(style: .continuous)
+        return ZStack {
+            GlassBlur(style: colorScheme == .dark ? .systemUltraThinMaterialDark : .systemUltraThinMaterialLight)
+                .clipShape(shape)
+
+            // Milk layer: lighter in light mode, darker in dark mode.
+            shape.fill(colorScheme == .dark ? Color.black.opacity(0.35) : Color.white.opacity(0.60))
+
+            // Specular highlight along the top edge.
+            LinearGradient(
+                colors: [Color.white.opacity(colorScheme == .dark ? 0.18 : 0.55), Color.clear],
+                startPoint: .top,
+                endPoint: .center
+            )
+            .clipShape(shape)
+
+            shape.strokeBorder(Color.white.opacity(colorScheme == .dark ? 0.22 : 0.72), lineWidth: 1)
+            shape.strokeBorder(Color(.separator).opacity(colorScheme == .dark ? 0.18 : 0.12), lineWidth: 0.5)
+        }
+        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.35 : 0.12), radius: 24, x: 0, y: 10)
+        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.18 : 0.06), radius: 6,  x: 0, y: 2)
+    }
+
+    // MARK: Regular tab item
 
     private func tabButton(_ tab: AppMainTab, title: String, systemImage: String) -> some View {
-        Button {
+        let isSelected = selection == tab
+        return Button {
             selection = tab
         } label: {
-            VStack(spacing: 4) {
+            VStack(spacing: 3) {
                 Image(systemName: systemImage)
-                    .font(.system(size: 22, weight: .regular))
-                    .symbolVariant(selection == tab ? .fill : .none)
-                    .frame(height: tabIconSlotHeight)
-                    .frame(maxWidth: .infinity)
+                    .font(.system(size: 20, weight: isSelected ? .semibold : .regular))
+                    .symbolVariant(isSelected ? .fill : .none)
                 Text(title)
-                    .font(.caption2)
-                    .fontWeight(selection == tab ? .semibold : .regular)
+                    .font(.system(size: 10, weight: isSelected ? .semibold : .regular))
             }
-            .foregroundStyle(selection == tab ? Color.blue : Color.secondary)
+            .foregroundStyle(isSelected ? Color.primary : Color.secondary)
             .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
+            .padding(.horizontal, 4)
+            .background {
+                if isSelected {
+                    Capsule(style: .continuous)
+                        .fill(colorScheme == .dark ? Color.white.opacity(0.12) : Color.white.opacity(0.82))
+                        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.18 : 0.08), radius: 6, x: 0, y: 2)
+                }
+            }
+            .padding(.horizontal, 3)
         }
         .buttonStyle(.plain)
+        .animation(.spring(response: 0.28, dampingFraction: 0.72), value: isSelected)
     }
 
+    // MARK: Sell tab (red rounded-rect icon)
+
     private var sellButton: some View {
-        Button {
+        let isSelected = selection == .sell
+        return Button {
             selection = .sell
         } label: {
-            VStack(spacing: 4) {
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(Color.red)
-                    .frame(width: 40, height: 40)
-                    .overlay(
-                        Image(systemName: "plus")
-                            .font(.system(size: 22, weight: .bold))
-                            .foregroundStyle(.white)
-                    )
-                    .frame(height: tabIconSlotHeight)
-                    .frame(maxWidth: .infinity)
+            VStack(spacing: 3) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(Color.red)
+                        .frame(width: 36, height: 36)
+                    Image(systemName: "plus")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundStyle(.white)
+                }
                 Text("Sell")
-                    .font(.caption2)
-                    .fontWeight(selection == .sell ? .semibold : .medium)
-                    .foregroundStyle(selection == .sell ? Color.blue : Color.secondary)
+                    .font(.system(size: 10, weight: isSelected ? .semibold : .medium))
+                    .foregroundStyle(isSelected ? Color.primary : Color.secondary)
             }
             .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
+            .padding(.horizontal, 4)
+            .background {
+                if isSelected {
+                    Capsule(style: .continuous)
+                        .fill(colorScheme == .dark ? Color.white.opacity(0.12) : Color.white.opacity(0.82))
+                        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.18 : 0.08), radius: 6, x: 0, y: 2)
+                }
+            }
+            .padding(.horizontal, 3)
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Sell, add item")
+        .animation(.spring(response: 0.28, dampingFraction: 0.72), value: isSelected)
     }
 }
 
@@ -254,12 +299,10 @@ struct ProfileTabView: View {
         }
     }
 
-    /// Keep token check in one place so login/sign-up children are not rebuilt around unrelated `AuthStore` updates.
     private var needsAuthGate: Bool {
         auth.authToken == nil
     }
 
-    /// Shown under the avatar: **name** from `/mapi/user` only (hidden until loaded or if absent).
     private var meDisplayName: String {
         auth.currentUser?.name?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
     }
@@ -327,7 +370,7 @@ struct ProfileTabView: View {
     }
 }
 
-/// Guest UI only — does not observe `AuthStore`, so text field state isn’t fighting observation redraws.
+/// Guest UI only — does not observe `AuthStore`, so text field state isn't fighting observation redraws.
 private struct ProfileGuestShell: View {
     @Binding var selectedTab: AppMainTab
     @Binding var isShowingSignUp: Bool

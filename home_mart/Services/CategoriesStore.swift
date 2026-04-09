@@ -30,8 +30,9 @@ final class CategoriesStore {
         }
 
         let configuration = URLSessionConfiguration.ephemeral
-        configuration.timeoutIntervalForRequest = 8
-        configuration.timeoutIntervalForResource = 12
+        configuration.timeoutIntervalForRequest = APIConfiguration.feedRequestTimeout
+        configuration.timeoutIntervalForResource = APIConfiguration.feedResourceTimeout
+        configuration.waitsForConnectivity = true
         let session = URLSession(configuration: configuration)
 
         for url in APIConfiguration.categoryCandidateURLs {

@@ -28,8 +28,9 @@ final class ListingsStore {
         }
 
         let configuration = URLSessionConfiguration.ephemeral
-        configuration.timeoutIntervalForRequest = 8
-        configuration.timeoutIntervalForResource = 12
+        configuration.timeoutIntervalForRequest = APIConfiguration.feedRequestTimeout
+        configuration.timeoutIntervalForResource = APIConfiguration.feedResourceTimeout
+        configuration.waitsForConnectivity = true
         let session = URLSession(configuration: configuration)
 
         for url in APIConfiguration.listingCandidateURLs {
@@ -56,7 +57,9 @@ final class ListingsStore {
         request.setValue("application/json", forHTTPHeaderField: "Accept")
 
         let configuration = URLSessionConfiguration.ephemeral
-        configuration.timeoutIntervalForRequest = 15
+        configuration.timeoutIntervalForRequest = APIConfiguration.feedRequestTimeout
+        configuration.timeoutIntervalForResource = APIConfiguration.feedResourceTimeout
+        configuration.waitsForConnectivity = true
         let session = URLSession(configuration: configuration)
 
         do {

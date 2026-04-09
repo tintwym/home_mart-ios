@@ -15,6 +15,10 @@ enum APIConfiguration {
     /// `true`: Simulator uses a local JSON mock at `http://127.0.0.1:8787` (no production TLS).
     static var useLocalMockAPI = false
 
+    /// URLSession timeouts for public feed `GET`s (e.g. Vercel cold starts often exceed 8–10s; short timeouts cause `NSURLErrorDomain -1001`).
+    static let feedRequestTimeout: TimeInterval = 30
+    static let feedResourceTimeout: TimeInterval = 60
+
     /// Override with:
     /// - Info.plist: `HOME_MART_BASE_URL` (e.g. `https://api.example.com` or `http://127.0.0.1:8000`)
     /// - Environment: `HOME_MART_BASE_URL` (useful for CI)

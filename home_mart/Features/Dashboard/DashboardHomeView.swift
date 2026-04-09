@@ -31,24 +31,35 @@ private enum FilterChip: String, CaseIterable, Identifiable {
 
 /// Carousell-style home: categories from Laravel; “For you” shows all listings.
 struct DashboardHomeView: View {
+    var onSelectTab: ((AppMainTab) -> Void)? = nil
     @State private var searchText: String = ""
     @State private var store: ListingsStore
     @State private var categoriesStore: CategoriesStore
     /// `nil` = For you (all categories).
     @State private var selectedCategoryId: String?
     @State private var filterChip: FilterChip = .topPicks
+    @State private var listingPath = NavigationPath()
+    @State private var homeAlert: HomeAlert?
 
-    init() {
+    private enum HomeRoute: Hashable {
+        case checkout
+        case updates
+    }
+
+    init(onSelectTab: ((AppMainTab) -> Void)? = nil) {
+        self.onSelectTab = onSelectTab
         _store = State(initialValue: ListingsStore())
         _categoriesStore = State(initialValue: CategoriesStore())
     }
 
-    init(store: ListingsStore) {
+    init(store: ListingsStore, onSelectTab: ((AppMainTab) -> Void)? = nil) {
+        self.onSelectTab = onSelectTab
         _store = State(initialValue: store)
         _categoriesStore = State(initialValue: CategoriesStore())
     }
 
-    init(store: ListingsStore, categoriesStore: CategoriesStore) {
+    init(store: ListingsStore, categoriesStore: CategoriesStore, onSelectTab: ((AppMainTab) -> Void)? = nil) {
+        self.onSelectTab = onSelectTab
         _store = State(initialValue: store)
         _categoriesStore = State(initialValue: categoriesStore)
     }
@@ -72,7 +83,7 @@ struct DashboardHomeView: View {
     private let forYouAccent = Color(red: 0.48, green: 0.35, blue: 0.89)
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $listingPath) {
             VStack(spacing: 0) {
                 carousellHeader
 
@@ -112,10 +123,9 @@ struct DashboardHomeView: View {
                                 spacing: 14
                             ) {
                                 ForEach(displayedListings) { listing in
-                                    NavigationLink(value: listing) {
-                                        ListingCardView(listing: listing)
+                                    ListingCardView(listing: listing) {
+                                        listingPath.append(listing)
                                     }
-                                    .buttonStyle(.plain)
                                 }
                             }
                             .padding(.horizontal, 12)
@@ -142,7 +152,18 @@ struct DashboardHomeView: View {
             .navigationDestination(for: Listing.self) { listing in
                 ListingDetailView(listing: listing)
             }
+            .navigationDestination(for: HomeRoute.self) { route in
+                switch route {
+                case .checkout:
+                    CheckoutView()
+                case .updates:
+                    UpdatesView()
+                }
+            }
             .toolbar(.hidden, for: .navigationBar)
+        }
+        .alert(item: $homeAlert) { alert in
+            Alert(title: Text(alert.title), message: Text(alert.message), dismissButton: .default(Text("OK")))
         }
     }
 
@@ -159,7 +180,9 @@ struct DashboardHomeView: View {
                     .textFieldStyle(.plain)
                     .font(.body)
 
-                Button { } label: {
+                Button {
+                    homeAlert = HomeAlert(title: "Camera", message: "Not wired up yet.")
+                } label: {
                     Image(systemName: "camera.fill")
                         .font(.system(size: 16, weight: .medium))
                         .foregroundStyle(.secondary)
@@ -173,25 +196,37 @@ struct DashboardHomeView: View {
                     .fill(Color(.systemGray6).opacity(0.65))
             )
 
-            Button { } label: {
-                Image(systemName: "cart")
-                    .font(.system(size: 20, weight: .regular))
-                    .foregroundStyle(.primary)
-                    .frame(width: 40, height: 40)
-            }
-            .buttonStyle(.plain)
+            HStack(spacing: 6) {
+                Button {
+                    listingPath.append(HomeRoute.checkout)
+                } label: {
+                    Image(systemName: "cart")
+                        .font(.system(size: 20, weight: .regular))
+                        .foregroundStyle(.primary)
+                        .frame(width: 40, height: 40)
+                }
+                .buttonStyle(.plain)
 
-            Button { } label: {
-                Image(systemName: "bubble.left")
-                    .font(.system(size: 20, weight: .regular))
-                    .foregroundStyle(.primary)
-                    .frame(width: 40, height: 40)
+                Button {
+                    listingPath.append(HomeRoute.updates)
+                } label: {
+                    Image(systemName: "bell")
+                        .font(.system(size: 20, weight: .regular))
+                        .foregroundStyle(.primary)
+                        .frame(width: 40, height: 40)
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
         .background(Color(.systemBackground))
+    }
+
+    private struct HomeAlert: Identifiable {
+        let id = UUID()
+        let title: String
+        let message: String
     }
 
     // MARK: Section tabs (For you + Laravel categories)
@@ -265,7 +300,9 @@ struct DashboardHomeView: View {
                 Text("Deals you’ll like")
                     .font(.headline)
                     .foregroundStyle(.white)
-                Button { } label: {
+                Button {
+                    homeAlert = HomeAlert(title: "Deals", message: "Not wired up yet.")
+                } label: {
                     Text("Browse now!")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.black)
