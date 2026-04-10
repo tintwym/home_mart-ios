@@ -40,6 +40,7 @@ final class AuthStore {
         AuthTokenStorage.delete()
         UserDefaults.standard.removeObject(forKey: legacyAuthTokenUserDefaultsKey)
         lastError = nil
+        BiometricAuthSettingsStore.shared.invalidateForegroundBiometricSatisfaction()
     }
 
     /// Refreshes `currentUser` from the API. No-op when logged out.

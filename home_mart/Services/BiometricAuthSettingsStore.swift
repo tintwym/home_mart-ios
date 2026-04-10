@@ -65,6 +65,9 @@ final class BiometricAuthSettingsStore {
 
     private(set) var isBiometricSecondFactorEnabled: Bool
 
+    /// After app backgrounds, this resets so Face ID / Touch ID is required again while signed in with device 2FA on.
+    private(set) var isForegroundBiometricSatisfied: Bool = false
+
     private init() {
         isBiometricSecondFactorEnabled = UserDefaults.standard.bool(forKey: defaultsKey)
     }
@@ -72,6 +75,17 @@ final class BiometricAuthSettingsStore {
     func setBiometricSecondFactorEnabled(_ enabled: Bool) {
         isBiometricSecondFactorEnabled = enabled
         UserDefaults.standard.set(enabled, forKey: defaultsKey)
+        if !enabled {
+            isForegroundBiometricSatisfied = true
+        }
+    }
+
+    func markForegroundBiometricSatisfied() {
+        isForegroundBiometricSatisfied = true
+    }
+
+    func invalidateForegroundBiometricSatisfaction() {
+        isForegroundBiometricSatisfied = false
     }
 
     /// Prompts the user with Face ID / Touch ID when biometric second factor is enabled. No-op if disabled.

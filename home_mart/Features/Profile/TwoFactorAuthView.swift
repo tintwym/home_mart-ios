@@ -20,7 +20,7 @@ struct TwoFactorAuthView: View {
         List {
             Section {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Add an extra step when you sign in or take sensitive actions on this device.")
+                    Text(introCopy)
                         .font(.subheadline)
                         .foregroundStyle(muted)
                 }
@@ -96,6 +96,13 @@ struct TwoFactorAuthView: View {
         }
     }
 
+    private var introCopy: String {
+        if biometricKind.isAvailable {
+            return "Use \(biometricKind.displayName) as a second step after you sign in, when you return to the app, and before sensitive actions like changing your password."
+        }
+        return "Turn on Face ID or Touch ID on this device to add a second step after you sign in, when you return to the app, and before sensitive actions like changing your password."
+    }
+
     private func enableBiometric() async {
         authInProgress = true
         defer { authInProgress = false }
@@ -103,6 +110,7 @@ struct TwoFactorAuthView: View {
             try await BiometricAuthSettingsStore.evaluateBiometric(
                 localizedReason: "Enable \(biometricKind.displayName) as a second factor for Home Mart on this device."
             )
+            store.markForegroundBiometricSatisfied()
             store.setBiometricSecondFactorEnabled(true)
         } catch {
             let laError = error as? LAError

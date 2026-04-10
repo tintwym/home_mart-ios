@@ -4,11 +4,12 @@
 <dict>
 	<key>HOME_MART_BASE_URL</key>
 	<string>$(HOME_MART_BASE_URL)</string>
-	<key>NSFaceIDUsageDescription</key>
-	<string>Home Mart uses Face ID to confirm your identity for two-factor authentication on this device.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
+		<string>location</string>
+		<string>processing</string>
+		<string>fetch</string>
 	</array>
 </dict>
 </plist>
